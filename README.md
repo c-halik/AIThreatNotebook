@@ -1,8 +1,12 @@
 # AI Threat Notebook
 
 A Streamlit chatbot for querying an AI security / agentic AI security
-knowledge base, with an editable notebook you can add to over time. Runs
-fully locally on open-source tooling:
+knowledge base, with an editable notebook you can add to over time. Built
+for evaluating AI security vendor tools (Noma Security, Palo Alto Prisma
+AIRS, etc.) against customer requirements - ask about a requirement or
+capability and it surfaces every vendor in your notes that addresses it,
+citing the specific vendor and feature. Runs fully locally on open-source
+tooling:
 
 - **UI**: Streamlit
 - **LLM**: Ollama (`llama3:8b` by default)
@@ -70,6 +74,23 @@ After adding or editing anything, click **Rebuild index** in the app (or run
 `python ingest.py`) to make the changes searchable. The index is rebuilt
 from scratch each time, so edits and deletions in the knowledge base are
 reflected immediately.
+
+### Structuring vendor evaluation notes
+
+If you're using this to compare vendor tools against requirements (the
+intended use case), a couple of conventions make retrieval much better:
+
+- **One file per vendor/product** (e.g. `noma-security.md`, `prisma-airs.md`).
+  Answers cite sources by filename, so this is what lets the chatbot tell you
+  *which vendor* covers a given requirement, with zero extra tagging.
+- **Use a markdown header per capability** within each file (e.g.
+  `## Shadow AI Discovery`, `## Data Loss Prevention`). Chunking splits on
+  structure, so headers keep a capability's details together instead of
+  getting split mid-thought.
+- See `RETRIEVAL_K` and `MATCH_RELEVANCE_THRESHOLD` in `config.py` - tuned to
+  surface *every* vendor that plausibly matches a requirement rather than a
+  fixed top-N. Recalibrate both once you've loaded your real notes and can
+  see actual score spreads (print `best_score` from `rag/retrieval.py`).
 
 ## Web search fallback
 

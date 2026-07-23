@@ -82,9 +82,9 @@ npx -y @mermaid-js/mermaid-cli -i docs_assets/architecture.mmd -o docs_assets/ar
 | Artifact | Role |
 |---|---|
 | [`app.py`](app.py) | Streamlit entrypoint. Renders the Chat tab and Knowledge Base / Notebook tab; wires user input to `rag/` and `knowledge_base/`. |
-| [`config.py`](config.py) | Single source of truth for model names (`LLM_MODEL`, `EMBED_MODEL`), paths, chunk size/overlap, retrieval `k`, the system prompt, trusted security sites, and the KB relevance threshold. |
+| [`config.py`](config.py) | Single source of truth for model names (`LLM_MODEL`, `EMBED_MODEL`), paths, chunk size/overlap, retrieval `k`, `MATCH_RELEVANCE_THRESHOLD`, the system prompt (tuned for vendor-capability-vs-requirement matching), trusted security sites, and the KB relevance threshold. |
 | [`ingest.py`](ingest.py) | Batch job: loads every file under `knowledge_base/`, splits into chunks, embeds them, and rebuilds `.chroma/` from scratch. Run via CLI or the "Rebuild index" button in the UI. |
-| [`rag/retrieval.py`](rag/retrieval.py) | Opens the persisted Chroma store, runs similarity search for a given question, and returns a relevance score used to decide whether the KB has a good answer. |
+| [`rag/retrieval.py`](rag/retrieval.py) | Retrieves up to `RETRIEVAL_K` candidate chunks and keeps every one scoring at or above `MATCH_RELEVANCE_THRESHOLD` - i.e. every plausible vendor match, not a fixed top-N - plus a best-score used to decide whether the KB has a good answer at all. |
 | [`rag/websearch.py`](rag/websearch.py) | Web search fallback: queries DuckDuckGo via `ddgs`, restricted to `TRUSTED_SECURITY_SITES`, when the KB has no strong match (or the user forces it). Fails safe (returns no results) on network/rate-limit errors. |
 | [`rag/llm.py`](rag/llm.py) | Builds the system + KB-context + web-context + history prompt and streams a response from the local Ollama chat model. |
 | [`knowledge_base/notebook/`](knowledge_base/notebook/) | **Editable** — your own markdown notes, added/edited directly in the app. This is the "notebook." |
