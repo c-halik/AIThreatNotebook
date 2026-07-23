@@ -66,6 +66,11 @@ jobs:
       - name: Pull latest image and restart stack
         env:
           APP_IMAGE: ${{ needs.build.outputs.image_name }}:latest
+        # Explicit bash: GitHub Actions defaults to pwsh on Windows
+        # self-hosted runners, which would misparse the ${VAR} syntax below.
+        # Requires Git for Windows (bash.exe) on the PATH if the runner is
+        # on Windows - see DEPLOYMENT.md's Windows section.
+        shell: bash
         run: |
           echo "APP_IMAGE=${APP_IMAGE}" > .env
           docker compose pull app
