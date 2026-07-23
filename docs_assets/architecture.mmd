@@ -1,0 +1,60 @@
+flowchart TB
+    User(("User / Browser"))
+
+    subgraph UI["Streamlit UI — app.py"]
+        ChatTab["Chat tab"]
+        KBTab["Knowledge Base / Notebook tab"]
+    end
+
+    subgraph KB["knowledge_base/ (editable content)"]
+        Notebook["notebook/*.md\n(your notes)"]
+        Docs["docs/*.md, *.pdf\n(reference material)"]
+    end
+
+    subgraph RAG["rag/ (application logic)"]
+        Retrieval["retrieval.py\nsimilarity search\n+ relevance score"]
+        WebSearch["websearch.py\nDuckDuckGo (ddgs)\nsite-restricted search"]
+        LLM["llm.py\nprompt + streaming"]
+    end
+
+    Ingest["ingest.py\nload -> chunk -> embed"]
+    Vector[("Chroma vector store\n.chroma/ (persisted)")]
+    Web(("Internet\ntrusted security sites:\nDark Reading, The Hacker News,\nBleepingComputer, Krebs,\nOWASP, MITRE ATT&CK/ATLAS, ..."))
+
+    subgraph Ollama["Ollama (local)"]
+        ChatModel["llama3:8b\n(chat)"]
+        EmbedModel["nomic-embed-text\n(embeddings)"]
+    end
+
+    Config["config.py\nmodel names, paths, system prompt,\nchunk size, trusted sites,\nrelevance threshold"]
+
+    User --> ChatTab
+    User --> KBTab
+
+    KBTab -- "edit / upload" --> Notebook
+    KBTab -- "edit / upload" --> Docs
+    KBTab -- "Rebuild index button" --> Ingest
+
+    Notebook --> Ingest
+    Docs --> Ingest
+    Ingest -- "embed chunks" --> EmbedModel
+    Ingest -- "write vectors" --> Vector
+
+    ChatTab -- "question" --> Retrieval
+    Retrieval -- "embed query" --> EmbedModel
+    Retrieval -- "similarity search" --> Vector
+    Retrieval -- "top-k chunks + score" --> LLM
+    Retrieval -- "low/no relevance" --> WebSearch
+    ChatTab -- "force web search\n(sidebar toggle)" --> WebSearch
+    WebSearch -- "site-restricted query" --> Web
+    Web -- "search results" --> WebSearch
+    WebSearch -- "titles + snippets + URLs" --> LLM
+    ChatTab -- "question + history" --> LLM
+    LLM -- "prompt" --> ChatModel
+    ChatModel -- "streamed answer" --> ChatTab
+
+    Config -.-> Ingest
+    Config -.-> Retrieval
+    Config -.-> WebSearch
+    Config -.-> LLM
+    Config -.-> UI

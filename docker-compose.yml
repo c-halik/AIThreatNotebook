@@ -1,0 +1,59 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    # Uncomment to use an NVIDIA GPU on hosts that have one configured for Docker:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # One-shot job: pulls the models the app needs, then exits. The app
+  # container waits for this to finish successfully before it starts.
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "ollama pull llama3:8b && ollama pull nomic-embed-text"
+    restart: "no"
+
+  app:
+    build: .
+    # Set via .env as APP_IMAGE=ghcr.io/<owner>/<repo>/security-chatbot:latest
+    # so a deploy host can `docker compose pull && docker compose up -d`
+    # without needing the build context at all.
+    image: ${APP_IMAGE:-ai-security-chatbot:local}
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+    volumes:
+      # Bind-mount so notes/docs you add through the UI land on the host
+      # filesystem too (and are visible to git, editors, backups, etc).
+      - ./knowledge_base:/app/knowledge_base
+      - chroma_data:/app/.chroma
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+  chroma_data:

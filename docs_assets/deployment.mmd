@@ -1,0 +1,24 @@
+flowchart LR
+    Dev(("Developer\ngit push")) --> GH["GitHub\nmain branch"]
+
+    subgraph CI["GitHub Actions (security-chatbot-docker.yml)"]
+        Build["build job\ndocker build\n(runs on PR + push)"]
+        Push["push to GHCR\n(main only)"]
+        Deploy["deploy job\nruns on self-hosted runner\n(main only)"]
+        Build --> Push --> Deploy
+    end
+
+    GH -- "push/PR touching\nsecurity-chatbot/**" --> Build
+    Push --> GHCR[("GHCR\nghcr.io/OWNER/REPO/\nsecurity-chatbot")]
+    GHCR --> Deploy
+
+    subgraph VM["Your cloud lab VM"]
+        Runner["self-hosted\nActions runner"]
+        Compose["docker compose\npull + up -d"]
+        App["app container\n:8501"]
+        Ollama["ollama container\nllama3:8b, nomic-embed-text"]
+        Runner --> Compose --> App
+        Compose --> Ollama
+    end
+
+    Deploy -. "polls GitHub for jobs\n(outbound only)" .-> Runner

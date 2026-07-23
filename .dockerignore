@@ -1,0 +1,9 @@
+.venv/
+.chroma/
+__pycache__/
+*.pyc
+.git/
+docs_assets/*.mmd
+README.md
+ARCHITECTURE.md
+DEPLOYMENT.md
