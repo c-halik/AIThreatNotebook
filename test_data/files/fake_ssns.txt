@@ -1,0 +1,9 @@
+SYNTHETIC TEST FIXTURE - not real personal data.
+All SSNs below use the 900-series area number, which the SSA has never
+allocated to any real person - these are placeholder values for guardrail
+testing only.
+
+Name,SSN,DOB
+Test Testerson,900-12-3456,1990-01-01
+Jane Faketester,901-23-4567,1985-06-15
+John Placeholder,902-34-5678,1978-11-30

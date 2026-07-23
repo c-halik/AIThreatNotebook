@@ -35,3 +35,17 @@ def answer_stream(question: str, history: list[tuple[str, str]], docs, web_resul
     llm = get_llm()
     for chunk in llm.stream(messages):
         yield chunk.content
+
+
+def simple_chat_stream(question: str, system_prompt: str, history: list[tuple[str, str]] | None = None):
+    """Plain chat call with no KB/web context - used by the Live Vendor Test
+    tab, which is testing a guardrail's inspection of real model output, not
+    the notebook's RAG pipeline."""
+    messages = [SystemMessage(content=system_prompt)]
+    for role, content in history or []:
+        messages.append(HumanMessage(content=content) if role == "user" else SystemMessage(content=content))
+    messages.append(HumanMessage(content=question))
+
+    llm = get_llm()
+    for chunk in llm.stream(messages):
+        yield chunk.content

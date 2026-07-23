@@ -5,9 +5,12 @@ from datetime import datetime
 import streamlit as st
 
 import config
-from rag.llm import answer_stream
+from rag.llm import answer_stream, simple_chat_stream
 from rag.retrieval import retrieve_with_relevance
 from rag.websearch import search_security_sources
+from test_data.fixtures import FILE_FIXTURES, load_fixture_bytes
+from test_data.prompts import ADVERSARIAL_PROMPTS
+from vendors.registry import ALL_PROVIDERS
 
 st.set_page_config(page_title="AI Threat Notebook", layout="wide")
 
@@ -26,7 +29,7 @@ with st.sidebar:
             st.markdown(f"- `{site}`")
         st.caption("Edit TRUSTED_SECURITY_SITES in config.py to change this list.")
 
-chat_tab, kb_tab = st.tabs(["Chat", "Knowledge Base / Notebook"])
+chat_tab, kb_tab, live_test_tab = st.tabs(["Chat", "Knowledge Base / Notebook", "Live Vendor Test"])
 
 # ---------------------------------------------------------------------------
 # Chat tab
@@ -154,3 +157,119 @@ with kb_tab:
         else:
             st.error("Indexing failed.")
             st.code(result.stderr)
+
+# ---------------------------------------------------------------------------
+# Live Vendor Test tab
+# ---------------------------------------------------------------------------
+with live_test_tab:
+    st.title("Live Vendor Test")
+    st.caption(
+        "Mock guardrail vendors for local comparison - none of these call a real vendor API yet. "
+        "Pick a vendor and a persona, run a test, then switch vendors and resend to compare."
+    )
+
+    if "live_test_log" not in st.session_state:
+        st.session_state.live_test_log = []
+
+    vendor_name = st.selectbox("Vendor", list(ALL_PROVIDERS.keys()))
+    provider = ALL_PROVIDERS[vendor_name]
+    persona = st.radio("Persona", ["External threat actor", "Insider threat"], horizontal=True)
+
+    def render_verdict(verdict):
+        renderer = {"allow": st.success, "flag": st.warning, "block": st.error}[verdict.outcome]
+        renderer(f"**{verdict.vendor}** — {verdict.outcome.upper()}: {verdict.reason}")
+
+    if persona == "External threat actor":
+
+        def _apply_prompt_pick():
+            picked = st.session_state.get("live_test_prompt_pick", "(custom)")
+            st.session_state["live_test_prompt"] = (
+                ""
+                if picked == "(custom)"
+                else next(p["text"] for p in ADVERSARIAL_PROMPTS if p["label"] == picked)
+            )
+
+        prompt_labels = ["(custom)"] + [p["label"] for p in ADVERSARIAL_PROMPTS]
+        st.selectbox(
+            "Sample adversarial prompt",
+            prompt_labels,
+            key="live_test_prompt_pick",
+            on_change=_apply_prompt_pick,
+        )
+        # value= is intentionally omitted once "key" is set: Streamlit only honors
+        # value on first render, so reactive updates must go through session_state
+        # via the on_change callback above, not through this widget's own value=.
+        prompt_text = st.text_area("Prompt to send", height=100, key="live_test_prompt")
+
+        if st.button("Send", disabled=not prompt_text.strip()):
+            st.markdown("**Prompt inspection**")
+            prompt_verdict = provider.inspect_prompt(prompt_text)
+            render_verdict(prompt_verdict)
+
+            response_text, response_verdict = "", None
+            if prompt_verdict.outcome != "block":
+                st.markdown("**Model response**")
+                placeholder = st.empty()
+                partial = ""
+                for chunk in simple_chat_stream(prompt_text, config.LIVE_TEST_SYSTEM_PROMPT):
+                    partial += chunk
+                    placeholder.markdown(partial)
+                response_text = partial
+
+                st.markdown("**Response inspection**")
+                response_verdict = provider.inspect_response(response_text)
+                render_verdict(response_verdict)
+                if response_verdict.outcome == "block":
+                    st.error("Response withheld by guardrail.")
+            else:
+                st.info("Blocked at the prompt stage - no request sent to the model.")
+
+            st.session_state.live_test_log.append(
+                {
+                    "vendor": vendor_name,
+                    "persona": persona,
+                    "input": prompt_text,
+                    "prompt_verdict": f"{prompt_verdict.outcome}: {prompt_verdict.reason}",
+                    "response_verdict": f"{response_verdict.outcome}: {response_verdict.reason}" if response_verdict else "(not sent to model)",
+                }
+            )
+
+    else:  # Insider threat
+        fixture_labels = ["(upload custom file)"] + [f["label"] for f in FILE_FIXTURES]
+        picked_fixture = st.selectbox("Sample sensitive file", fixture_labels)
+
+        content_bytes, filename, content_type = None, None, None
+        if picked_fixture == "(upload custom file)":
+            uploaded = st.file_uploader("Upload a test file")
+            if uploaded is not None:
+                content_bytes = uploaded.getvalue()
+                filename, content_type = uploaded.name, uploaded.type
+        else:
+            fixture = next(f for f in FILE_FIXTURES if f["label"] == picked_fixture)
+            content_bytes = load_fixture_bytes(fixture["filename"])
+            filename, content_type = fixture["filename"], fixture["content_type"]
+            with st.expander(f"Preview {filename}"):
+                st.code(content_bytes.decode("utf-8", errors="replace"))
+
+        if content_bytes is not None and st.button("Inspect file"):
+            st.markdown("**File inspection**")
+            file_verdict = provider.inspect_file(filename, content_bytes, content_type or "")
+            render_verdict(file_verdict)
+
+            st.session_state.live_test_log.append(
+                {
+                    "vendor": vendor_name,
+                    "persona": persona,
+                    "input": filename,
+                    "prompt_verdict": f"{file_verdict.outcome}: {file_verdict.reason}",
+                    "response_verdict": "(n/a - file upload)",
+                }
+            )
+
+    if st.session_state.live_test_log:
+        st.divider()
+        with st.expander(f"Comparison log ({len(st.session_state.live_test_log)} tests this session)"):
+            st.dataframe(st.session_state.live_test_log, use_container_width=True)
+            if st.button("Clear log"):
+                st.session_state.live_test_log = []
+                st.rerun()

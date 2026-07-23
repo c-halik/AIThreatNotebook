@@ -1,0 +1,8 @@
+SYNTHETIC TEST FIXTURE - not real credentials.
+Every key below contains a FAKE/EXAMPLE marker and was never a valid,
+active credential - these are placeholder values for guardrail testing only.
+
+sk-FAKE1234567890ABCDEFGHIJKLMNOP
+AKIAFAKEEXAMPLE1234567890
+ghp_FAKEEXAMPLETOKEN1234567890ABCD
+xoxb-FAKE-EXAMPLE-TOKEN-1234567890

@@ -1,0 +1,9 @@
+SYNTHETIC TEST FIXTURE - not real payment card data.
+The numbers below are well-known, publicly documented test card numbers used
+by payment processors for integration testing - they are not real cardholder
+data and cannot be used to make a real charge.
+
+Cardholder,CardNumber,Network
+Test Testerson,4111111111111111,Visa (test number)
+Jane Faketester,5555555555554444,Mastercard (test number)
+John Placeholder,378282246310005,American Express (test number)
