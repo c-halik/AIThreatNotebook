@@ -23,7 +23,8 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for how this gets built and deployed via GitH
 ### Option A: Docker Compose (recommended, matches production)
 
 ```bash
-cd security-chatbot
+git clone https://github.com/c-halik/AIThreatNotebook.git
+cd AIThreatNotebook
 docker compose up -d --build
 docker compose exec app python ingest.py   # build the initial index
 ```
@@ -37,7 +38,8 @@ in [DEPLOYMENT.md](DEPLOYMENT.md).
 ### Option B: Local Python venv
 
 ```bash
-cd security-chatbot
+git clone https://github.com/c-halik/AIThreatNotebook.git
+cd AIThreatNotebook
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt

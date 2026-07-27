@@ -81,6 +81,38 @@ docker compose pull app@sha256:<digest-of-known-good-build>
 docker compose up -d
 ```
 
+## Resuming after the VM stops and starts again
+
+Everything on disk survives a VM stop/start - Docker itself, the cloned
+repo, the built app image, and (importantly) the downloaded Ollama models,
+since they live in a persisted volume and won't re-download. What does
+**not** come back on its own is `ollama`: in `docker-compose.yml`, `app` has
+`restart: unless-stopped` so it restarts automatically when Docker starts,
+but `ollama` has no restart policy, so after a reboot you can end up with
+`app` running and pointed at an `ollama` that isn't there.
+
+Fix this with [`resume.sh`](resume.sh), which just re-runs
+`docker compose up -d` (safe to run any time - a no-op for anything already
+up, and it does not rebuild or re-pull anything already in place) and
+prints the container status plus a reminder of the SSH-tunnel command:
+
+```bash
+cd ~/AIThreatNotebook   # wherever you cloned this repo
+./resume.sh
+```
+
+If you're accessing the app over SSH port-forwarding rather than an open
+NSG port (recommended - see the "Reaching it remotely" note in the Windows
+section below, which applies equally to a Linux VM), you'll need to
+reconnect with the tunnel after a VM restart too:
+
+```bash
+ssh -i <path-to-key> -L 8501:localhost:8501 <username>@<vm-public-ip>
+```
+
+then open `http://localhost:8501` locally (or, from Azure Cloud Shell, use
+its **Web Preview** button pointed at port 8501 instead of a local browser).
+
 ## Running on a Windows VM
 
 Nothing in the app requires Linux - Docker abstracts the container OS away,
@@ -102,10 +134,12 @@ pipeline above, or just to run the stack directly.
    Bash - needed below either way you use this VM).
 5. In Docker Desktop, go to Settings -> Resources and give it **at least
    8GB of RAM** (see "Resource notes" below for why).
-6. Clone the repo:
+6. Clone the repo. Note there is no `security-chatbot` subfolder after
+   cloning - `docker-compose.yml` and everything else land directly in
+   `AIThreatNotebook\`:
    ```powershell
    git clone https://github.com/c-halik/AIThreatNotebook.git
-   cd AIThreatNotebook\security-chatbot
+   cd AIThreatNotebook
    ```
 
 ### Option A: Just run the stack on the VM (no CI/CD)
@@ -157,12 +191,25 @@ Same idea as the Linux instructions above, with Windows-specific commands:
    Windows' default PowerShell runner shell - this just requires Git Bash
    (installed above) to be on the runner's `PATH`.
 
-### Reaching it remotely (either option)
+### Reaching it remotely (either option, and Linux VMs too)
 
-Port 8501 needs to be open in two places if you want to reach the app from
-outside the VM:
-1. **Windows Defender Firewall** on the VM: allow inbound TCP 8501 (New
-   inbound rule -> Port -> TCP -> 8501).
+**Preferred: SSH port forwarding, no open port at all.** Since this app has
+no auth in front of it yet, the safest option is to never expose port 8501
+to the network - tunnel it through the SSH connection you already have:
+```bash
+ssh -i <path-to-key> -L 8501:localhost:8501 <username>@<vm-public-ip>
+```
+then open `http://localhost:8501` locally (from Azure Cloud Shell, use its
+**Web Preview** button pointed at port 8501 instead of a local browser).
+Nothing needs opening in any firewall or NSG for this - the tunnel rides on
+the SSH connection, which is already how you're reaching the VM.
+
+**Alternative: open the port directly**, if you specifically need to reach
+it without an active SSH session (e.g. sharing with someone else on the lab
+network). Port 8501 needs to be open in two places:
+1. **Windows Defender Firewall** on the VM (Windows only): allow inbound
+   TCP 8501 (New inbound rule -> Port -> TCP -> 8501). On Linux, check
+   `sudo ufw status` first - if `ufw` is active, `sudo ufw allow 8501/tcp`.
 2. **Cloud network security group**, if this VM is in Azure/AWS/etc.: add
    an inbound rule allowing TCP 8501 from your IP (avoid opening it to
    `0.0.0.0/0` - this app has no auth in front of it yet, see the README's
