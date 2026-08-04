@@ -94,6 +94,7 @@ npx -y @mermaid-js/mermaid-cli -i docs_assets/architecture.mmd -o docs_assets/ar
 | Ollama (`llama3:8b`, `nomic-embed-text`) | Runs as its own service - either on the host (local dev) or as the `ollama` container (Docker/production) - providing the chat model and embedding model. |
 | [`Dockerfile`](Dockerfile) | Builds the app image: installs `requirements.txt`, copies the app, runs `streamlit run app.py` on `0.0.0.0:8501` with a healthcheck. |
 | [`docker-compose.yml`](docker-compose.yml) | Local/production stack: `ollama` (model server), `ollama-init` (one-shot model pull), and `app`. Bind-mounts `knowledge_base/` so edits persist to the host; `.chroma` and Ollama's models live in named volumes. |
+| [`resume.sh`](resume.sh) | Re-runs `docker compose up -d` after a VM stop/start. Needed because `ollama` has no restart policy in `docker-compose.yml` (unlike `app`), so it doesn't come back on its own after a reboot - see "Resuming after the VM stops and starts again" in [DEPLOYMENT.md](DEPLOYMENT.md). |
 | [`.github/workflows/docker-build-deploy.yml`](.github/workflows/docker-build-deploy.yml) | CI/CD: builds the image on every PR; on pushes to `main`, also pushes to GHCR and triggers the deploy job on a self-hosted runner in the lab. |
 | [`DEPLOYMENT.md`](DEPLOYMENT.md) | How code goes from `git push` to a running container on the lab VM - self-hosted runner setup, GHCR auth, and resource sizing notes. |
 
