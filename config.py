@@ -116,10 +116,12 @@ PRISMA_AIRS_API_KEY = os.environ.get("PRISMA_AIRS_API_KEY")
 PRISMA_AIRS_PROFILE_NAME = os.environ.get("PRISMA_AIRS_PROFILE_NAME")
 # Regional Scan API endpoints (US/EU/India/Singapore) are documented at the
 # link above; defaults to the US endpoint.
-PRISMA_AIRS_BASE_URL = os.environ.get(
-    "PRISMA_AIRS_BASE_URL", "https://service.api.aisecurity.paloaltonetworks.com"
+# "or" (not a get() default) because docker-compose passes unset vars through
+# as empty strings, which get() would return instead of the default.
+PRISMA_AIRS_BASE_URL = (
+    os.environ.get("PRISMA_AIRS_BASE_URL") or "https://service.api.aisecurity.paloaltonetworks.com"
 )
-PRISMA_AIRS_APP_NAME = os.environ.get("PRISMA_AIRS_APP_NAME", "AIThreatNotebook")
+PRISMA_AIRS_APP_NAME = os.environ.get("PRISMA_AIRS_APP_NAME") or "AIThreatNotebook"
 
 # Zscaler AI Guard, Detection-as-a-Service (DAS/API) mode - create an API
 # key under AI Guard > AI Applications > Add API Keys, and a policy under
@@ -127,7 +129,18 @@ PRISMA_AIRS_APP_NAME = os.environ.get("PRISMA_AIRS_APP_NAME", "AIThreatNotebook"
 # https://help.zscaler.com/secure-ai-apps-infra/quick-start-guide-dasapi-mode
 ZSCALER_AI_GUARD_API_KEY = os.environ.get("ZSCALER_AI_GUARD_API_KEY")
 ZSCALER_AI_GUARD_POLICY_ID = os.environ.get("ZSCALER_AI_GUARD_POLICY_ID")
-ZSCALER_AI_GUARD_BASE_URL = os.environ.get("ZSCALER_AI_GUARD_BASE_URL", "https://api.zseclipse.net")
+ZSCALER_AI_GUARD_BASE_URL = os.environ.get("ZSCALER_AI_GUARD_BASE_URL") or "https://api.zseclipse.net"
+
+# CrowdStrike AIDR (AI Detection and Response) AI Guard API - register an
+# Application collector under AI detection and response > Collectors in the
+# Falcon console, assign it a policy, and copy its token and base URL from the
+# collector's Config tab. The policy is bound to the collector, so there is no
+# policy ID to set. See https://aidr-docs.crowdstrike.com/docs/aidr/apis
+CROWDSTRIKE_AIDR_TOKEN = os.environ.get("CROWDSTRIKE_AIDR_TOKEN")
+CROWDSTRIKE_AIDR_BASE_URL = (
+    os.environ.get("CROWDSTRIKE_AIDR_BASE_URL") or "https://api.crowdstrike.com/aidr/aiguard"
+)
+CROWDSTRIKE_AIDR_APP_ID = os.environ.get("CROWDSTRIKE_AIDR_APP_ID") or "AIThreatNotebook"
 
 # Used by the Live Vendor Test tab, which calls the model directly (no KB/web
 # context) to see how a real assistant response fares against the selected

@@ -1,6 +1,7 @@
 import config
 from vendors.base import SecurityProvider
 from vendors.mocks import VENDOR_PROFILES, MockSecurityProvider
+from vendors.crowdstrike import CrowdStrikeAIDRProvider
 from vendors.prisma_airs import PrismaAirsProvider
 from vendors.zscaler import ZscalerAIGuardProvider
 
@@ -29,3 +30,11 @@ if config.ZSCALER_AI_GUARD_API_KEY and config.ZSCALER_AI_GUARD_POLICY_ID:
         base_url=config.ZSCALER_AI_GUARD_BASE_URL,
     )
     LIVE_PROVIDER_NAMES.add("Zscaler")
+
+if config.CROWDSTRIKE_AIDR_TOKEN:
+    ALL_PROVIDERS["CrowdStrike AIDR"] = CrowdStrikeAIDRProvider(
+        token=config.CROWDSTRIKE_AIDR_TOKEN,
+        base_url=config.CROWDSTRIKE_AIDR_BASE_URL,
+        app_id=config.CROWDSTRIKE_AIDR_APP_ID,
+    )
+    LIVE_PROVIDER_NAMES.add("CrowdStrike AIDR")

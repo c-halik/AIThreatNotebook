@@ -54,6 +54,9 @@ services:
       ZSCALER_AI_GUARD_API_KEY: ${ZSCALER_AI_GUARD_API_KEY:-}
       ZSCALER_AI_GUARD_POLICY_ID: ${ZSCALER_AI_GUARD_POLICY_ID:-}
       ZSCALER_AI_GUARD_BASE_URL: ${ZSCALER_AI_GUARD_BASE_URL:-}
+      CROWDSTRIKE_AIDR_TOKEN: ${CROWDSTRIKE_AIDR_TOKEN:-}
+      CROWDSTRIKE_AIDR_BASE_URL: ${CROWDSTRIKE_AIDR_BASE_URL:-}
+      CROWDSTRIKE_AIDR_APP_ID: ${CROWDSTRIKE_AIDR_APP_ID:-}
     volumes:
       # Bind-mount so notes/docs you add through the UI land on the host
       # filesystem too (and are visible to git, editors, backups, etc).
