@@ -66,13 +66,23 @@ jobs:
       - name: Pull latest image and restart stack
         env:
           APP_IMAGE: ${{ needs.build.outputs.image_name }}:latest
+          PRISMA_AIRS_API_KEY: ${{ secrets.PRISMA_AIRS_API_KEY }}
+          PRISMA_AIRS_PROFILE_NAME: ${{ secrets.PRISMA_AIRS_PROFILE_NAME }}
+          ZSCALER_AI_GUARD_API_KEY: ${{ secrets.ZSCALER_AI_GUARD_API_KEY }}
+          ZSCALER_AI_GUARD_POLICY_ID: ${{ secrets.ZSCALER_AI_GUARD_POLICY_ID }}
         # Explicit bash: GitHub Actions defaults to pwsh on Windows
         # self-hosted runners, which would misparse the ${VAR} syntax below.
         # Requires Git for Windows (bash.exe) on the PATH if the runner is
         # on Windows - see DEPLOYMENT.md's Windows section.
         shell: bash
         run: |
-          echo "APP_IMAGE=${APP_IMAGE}" > .env
+          {
+            echo "APP_IMAGE=${APP_IMAGE}"
+            echo "PRISMA_AIRS_API_KEY=${PRISMA_AIRS_API_KEY}"
+            echo "PRISMA_AIRS_PROFILE_NAME=${PRISMA_AIRS_PROFILE_NAME}"
+            echo "ZSCALER_AI_GUARD_API_KEY=${ZSCALER_AI_GUARD_API_KEY}"
+            echo "ZSCALER_AI_GUARD_POLICY_ID=${ZSCALER_AI_GUARD_POLICY_ID}"
+          } > .env
           docker compose pull app
           docker compose up -d
           docker image prune -f

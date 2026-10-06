@@ -20,3 +20,10 @@ class SecurityProvider(Protocol):
     def inspect_response(self, text: str) -> Verdict: ...
 
     def inspect_file(self, filename: str, content_bytes: bytes, content_type: str) -> Verdict: ...
+
+
+class VendorAPIError(Exception):
+    """Raised by a live (real HTTP-calling) provider when a vendor API call
+    fails - network error, non-2xx response, or a malformed response body.
+    Callers should surface this distinctly from a Verdict, since it means the
+    vendor was never actually able to render a verdict."""

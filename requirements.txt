@@ -7,3 +7,5 @@ langchain-text-splitters>=0.3
 chromadb>=0.5
 pypdf>=4.0
 ddgs>=9.0
+requests>=2.31
+python-dotenv>=1.0

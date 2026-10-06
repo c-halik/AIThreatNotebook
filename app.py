@@ -10,7 +10,8 @@ from rag.retrieval import retrieve_with_relevance
 from rag.websearch import search_security_sources
 from test_data.fixtures import FILE_FIXTURES, load_fixture_bytes
 from test_data.prompts import ADVERSARIAL_PROMPTS
-from vendors.registry import ALL_PROVIDERS
+from vendors.base import VendorAPIError
+from vendors.registry import ALL_PROVIDERS, LIVE_PROVIDER_NAMES
 
 st.set_page_config(page_title="AI Threat Notebook", layout="wide")
 
@@ -164,14 +165,19 @@ with kb_tab:
 with live_test_tab:
     st.title("Live Vendor Test")
     st.caption(
-        "Mock guardrail vendors for local comparison - none of these call a real vendor API yet. "
-        "Pick a vendor and a persona, run a test, then switch vendors and resend to compare."
+        "Vendors marked — live API call the real vendor endpoint; the rest are local "
+        "heuristic mocks for comparison (no real integration wired up yet). Pick a vendor "
+        "and a persona, run a test, then switch vendors and resend to compare."
     )
 
     if "live_test_log" not in st.session_state:
         st.session_state.live_test_log = []
 
-    vendor_name = st.selectbox("Vendor", list(ALL_PROVIDERS.keys()))
+    vendor_name = st.selectbox(
+        "Vendor",
+        list(ALL_PROVIDERS.keys()),
+        format_func=lambda n: f"{n} — live API" if n in LIVE_PROVIDER_NAMES else f"{n} (mock)",
+    )
     provider = ALL_PROVIDERS[vendor_name]
     persona = st.radio("Persona", ["External threat actor", "Insider threat"], horizontal=True)
 
@@ -203,7 +209,11 @@ with live_test_tab:
 
         if st.button("Send", disabled=not prompt_text.strip()):
             st.markdown("**Prompt inspection**")
-            prompt_verdict = provider.inspect_prompt(prompt_text)
+            try:
+                prompt_verdict = provider.inspect_prompt(prompt_text)
+            except VendorAPIError as exc:
+                st.error(str(exc))
+                st.stop()
             render_verdict(prompt_verdict)
 
             response_text, response_verdict = "", None
@@ -217,7 +227,11 @@ with live_test_tab:
                 response_text = partial
 
                 st.markdown("**Response inspection**")
-                response_verdict = provider.inspect_response(response_text)
+                try:
+                    response_verdict = provider.inspect_response(response_text)
+                except VendorAPIError as exc:
+                    st.error(str(exc))
+                    st.stop()
                 render_verdict(response_verdict)
                 if response_verdict.outcome == "block":
                     st.error("Response withheld by guardrail.")
@@ -253,7 +267,11 @@ with live_test_tab:
 
         if content_bytes is not None and st.button("Inspect file"):
             st.markdown("**File inspection**")
-            file_verdict = provider.inspect_file(filename, content_bytes, content_type or "")
+            try:
+                file_verdict = provider.inspect_file(filename, content_bytes, content_type or "")
+            except VendorAPIError as exc:
+                st.error(str(exc))
+                st.stop()
             render_verdict(file_verdict)
 
             st.session_state.live_test_log.append(

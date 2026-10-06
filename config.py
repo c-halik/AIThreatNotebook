@@ -1,7 +1,14 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 ROOT_DIR = Path(__file__).parent
+
+# Local (non-Docker) runs have no other mechanism to pick up .env - Docker
+# Compose passes real container env vars instead, and load_dotenv() never
+# overrides a var that's already set, so this is a no-op there.
+load_dotenv(ROOT_DIR / ".env")
 KB_DIR = ROOT_DIR / "knowledge_base"
 NOTEBOOK_DIR = KB_DIR / "notebook"
 DOCS_DIR = KB_DIR / "docs"
@@ -95,6 +102,32 @@ web search" section actually appears below - if it's absent, you were not given 
 - Be precise and technical; this output may be shared externally to demonstrate how a \
 vendor meets a stated requirement, so accuracy and clear sourcing matter more than brevity.
 """
+
+# --- Live vendor API credentials -----------------------------------------
+# When both an API key and profile name are set for a vendor (via
+# environment/.env), vendors/registry.py wires up the real HTTP-calling
+# provider for that vendor in the Live Vendor Test tab; otherwise it falls
+# back to the local heuristic mock, so the tab works with zero configuration.
+
+# Palo Alto Networks Prisma AIRS (AI Runtime Security) - create an API key
+# and a security profile in Strata Cloud Manager, see
+# https://pan.dev/prisma-airs/api/airuntimesecurity/airuntimesecurityapi/
+PRISMA_AIRS_API_KEY = os.environ.get("PRISMA_AIRS_API_KEY")
+PRISMA_AIRS_PROFILE_NAME = os.environ.get("PRISMA_AIRS_PROFILE_NAME")
+# Regional Scan API endpoints (US/EU/India/Singapore) are documented at the
+# link above; defaults to the US endpoint.
+PRISMA_AIRS_BASE_URL = os.environ.get(
+    "PRISMA_AIRS_BASE_URL", "https://service.api.aisecurity.paloaltonetworks.com"
+)
+PRISMA_AIRS_APP_NAME = os.environ.get("PRISMA_AIRS_APP_NAME", "AIThreatNotebook")
+
+# Zscaler AI Guard, Detection-as-a-Service (DAS/API) mode - create an API
+# key under AI Guard > AI Applications > Add API Keys, and a policy under
+# AI Guard > Policy > Configurations (note its numeric Policy ID), see
+# https://help.zscaler.com/secure-ai-apps-infra/quick-start-guide-dasapi-mode
+ZSCALER_AI_GUARD_API_KEY = os.environ.get("ZSCALER_AI_GUARD_API_KEY")
+ZSCALER_AI_GUARD_POLICY_ID = os.environ.get("ZSCALER_AI_GUARD_POLICY_ID")
+ZSCALER_AI_GUARD_BASE_URL = os.environ.get("ZSCALER_AI_GUARD_BASE_URL", "https://api.zseclipse.net")
 
 # Used by the Live Vendor Test tab, which calls the model directly (no KB/web
 # context) to see how a real assistant response fares against the selected

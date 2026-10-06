@@ -45,6 +45,15 @@ services:
         condition: service_completed_successfully
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
+      # Passed through from the host's .env (docker compose auto-loads it for
+      # variable substitution) so the live vendor providers work in compose too.
+      PRISMA_AIRS_API_KEY: ${PRISMA_AIRS_API_KEY:-}
+      PRISMA_AIRS_PROFILE_NAME: ${PRISMA_AIRS_PROFILE_NAME:-}
+      PRISMA_AIRS_BASE_URL: ${PRISMA_AIRS_BASE_URL:-}
+      PRISMA_AIRS_APP_NAME: ${PRISMA_AIRS_APP_NAME:-}
+      ZSCALER_AI_GUARD_API_KEY: ${ZSCALER_AI_GUARD_API_KEY:-}
+      ZSCALER_AI_GUARD_POLICY_ID: ${ZSCALER_AI_GUARD_POLICY_ID:-}
+      ZSCALER_AI_GUARD_BASE_URL: ${ZSCALER_AI_GUARD_BASE_URL:-}
     volumes:
       # Bind-mount so notes/docs you add through the UI land on the host
       # filesystem too (and are visible to git, editors, backups, etc).

@@ -7,3 +7,4 @@ docs_assets/*.mmd
 README.md
 ARCHITECTURE.md
 DEPLOYMENT.md
+.env
