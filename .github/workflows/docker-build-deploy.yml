@@ -59,7 +59,7 @@ jobs:
   deploy:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, security-lab]
+    runs-on: [self-hosted, Linux]
     steps:
       - uses: actions/checkout@v4
 
