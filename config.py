@@ -142,6 +142,16 @@ CROWDSTRIKE_AIDR_BASE_URL = (
 )
 CROWDSTRIKE_AIDR_APP_ID = os.environ.get("CROWDSTRIKE_AIDR_APP_ID") or "AIThreatNotebook"
 
+# Cisco AI Defense Inspection API - generate an API key from the AI Defense UI
+# (it is created with a connection). Regional hosts: us / ap / eu, e.g.
+# https://eu.api.inspect.aidefense.security.cisco.com. Unlike the other vendors
+# there is no mock, so Cisco appears in the tab only when a key is set. See
+# https://developer.cisco.com/docs/ai-defense-inspection/inspect-conversations/
+CISCO_AI_DEFENSE_API_KEY = os.environ.get("CISCO_AI_DEFENSE_API_KEY")
+CISCO_AI_DEFENSE_BASE_URL = (
+    os.environ.get("CISCO_AI_DEFENSE_BASE_URL") or "https://us.api.inspect.aidefense.security.cisco.com"
+)
+
 # Used by the Live Vendor Test tab, which calls the model directly (no KB/web
 # context) to see how a real assistant response fares against the selected
 # mock guardrail's response inspection. Deliberately neutral - the RAG

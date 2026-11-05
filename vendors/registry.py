@@ -1,6 +1,7 @@
 import config
 from vendors.base import SecurityProvider
 from vendors.mocks import VENDOR_PROFILES, MockSecurityProvider
+from vendors.cisco import CiscoAIDefenseProvider
 from vendors.crowdstrike import CrowdStrikeAIDRProvider
 from vendors.prisma_airs import PrismaAirsProvider
 from vendors.zscaler import ZscalerAIGuardProvider
@@ -38,3 +39,10 @@ if config.CROWDSTRIKE_AIDR_TOKEN:
         app_id=config.CROWDSTRIKE_AIDR_APP_ID,
     )
     LIVE_PROVIDER_NAMES.add("CrowdStrike AIDR")
+
+if config.CISCO_AI_DEFENSE_API_KEY:
+    ALL_PROVIDERS["Cisco AI Defense"] = CiscoAIDefenseProvider(
+        api_key=config.CISCO_AI_DEFENSE_API_KEY,
+        base_url=config.CISCO_AI_DEFENSE_BASE_URL,
+    )
+    LIVE_PROVIDER_NAMES.add("Cisco AI Defense")

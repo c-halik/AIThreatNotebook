@@ -57,6 +57,8 @@ services:
       CROWDSTRIKE_AIDR_TOKEN: ${CROWDSTRIKE_AIDR_TOKEN:-}
       CROWDSTRIKE_AIDR_BASE_URL: ${CROWDSTRIKE_AIDR_BASE_URL:-}
       CROWDSTRIKE_AIDR_APP_ID: ${CROWDSTRIKE_AIDR_APP_ID:-}
+      CISCO_AI_DEFENSE_API_KEY: ${CISCO_AI_DEFENSE_API_KEY:-}
+      CISCO_AI_DEFENSE_BASE_URL: ${CISCO_AI_DEFENSE_BASE_URL:-}
     volumes:
       # Bind-mount so notes/docs you add through the UI land on the host
       # filesystem too (and are visible to git, editors, backups, etc).

@@ -72,6 +72,8 @@ jobs:
           ZSCALER_AI_GUARD_POLICY_ID: ${{ secrets.ZSCALER_AI_GUARD_POLICY_ID }}
           CROWDSTRIKE_AIDR_TOKEN: ${{ secrets.CROWDSTRIKE_AIDR_TOKEN }}
           CROWDSTRIKE_AIDR_BASE_URL: ${{ secrets.CROWDSTRIKE_AIDR_BASE_URL }}
+          CISCO_AI_DEFENSE_API_KEY: ${{ secrets.CISCO_AI_DEFENSE_API_KEY }}
+          CISCO_AI_DEFENSE_BASE_URL: ${{ secrets.CISCO_AI_DEFENSE_BASE_URL }}
         # Explicit bash: GitHub Actions defaults to pwsh on Windows
         # self-hosted runners, which would misparse the ${VAR} syntax below.
         # Requires Git for Windows (bash.exe) on the PATH if the runner is
@@ -86,6 +88,8 @@ jobs:
             echo "ZSCALER_AI_GUARD_POLICY_ID=${ZSCALER_AI_GUARD_POLICY_ID}"
             echo "CROWDSTRIKE_AIDR_TOKEN=${CROWDSTRIKE_AIDR_TOKEN}"
             echo "CROWDSTRIKE_AIDR_BASE_URL=${CROWDSTRIKE_AIDR_BASE_URL}"
+            echo "CISCO_AI_DEFENSE_API_KEY=${CISCO_AI_DEFENSE_API_KEY}"
+            echo "CISCO_AI_DEFENSE_BASE_URL=${CISCO_AI_DEFENSE_BASE_URL}"
           } > .env
           docker compose pull app
           docker compose up -d
