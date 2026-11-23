@@ -44,14 +44,15 @@ class CiscoAIDefenseProvider:
         self.base_url = base_url.rstrip("/")
         self.rules = rules or ALL_RULES
 
-    def _inspect(self, role: str, content: str) -> dict:
+    def _post(self, role: str, content: str, config: dict | None) -> requests.Response:
         payload = {
             "messages": [{"role": role, "content": content}],
             "metadata": {"user": "live-vendor-test", "src_app": "AIThreatNotebook"},
-            "config": {"enabled_rules": [{"rule_name": r} for r in self.rules]},
         }
+        if config is not None:
+            payload["config"] = config
         try:
-            resp = requests.post(
+            return requests.post(
                 f"{self.base_url}{INSPECT_PATH}",
                 headers={
                     "X-Cisco-AI-Defense-API-Key": self.api_key,
@@ -63,14 +64,26 @@ class CiscoAIDefenseProvider:
         except requests.RequestException as exc:
             raise VendorAPIError(f"{self.name}: request to {self.base_url} failed - {exc}") from exc
 
+    def _inspect(self, role: str, content: str) -> dict:
+        # Prefer the policy attached to the key's connection: only those
+        # inspections create events in the Cisco console. Without one, fall
+        # back to inline rules, which are evaluated but never logged.
+        resp = self._post(role, content, None)
+        used_connection_policy = resp.status_code == 200
+        if resp.status_code == 400 and "No policies are attached" in resp.text:
+            config = {"enabled_rules": [{"rule_name": r} for r in self.rules]}
+            resp = self._post(role, content, config)
+
         if resp.status_code != 200:
             raise VendorAPIError(
                 f"{self.name}: API returned HTTP {resp.status_code} - {resp.text[:500]}"
             )
         try:
-            return resp.json()
+            result = resp.json()
         except ValueError as exc:
             raise VendorAPIError(f"{self.name}: API returned a non-JSON response - {exc}") from exc
+        result["_used_connection_policy"] = used_connection_policy
+        return result
 
     def _verdict_from_result(self, result: dict) -> Verdict:
         pii = sorted(
@@ -97,6 +110,8 @@ class CiscoAIDefenseProvider:
 
         if result.get("event_id"):
             reason += f" [event {result['event_id']}]"
+        if not result.get("_used_connection_policy"):
+            reason += " [inline rules: no policy is attached to this connection, so Cisco logs no event]"
         return Verdict(vendor=self.name, outcome=outcome, reason=reason, signals=signals)
 
     def inspect_prompt(self, text: str) -> Verdict:
