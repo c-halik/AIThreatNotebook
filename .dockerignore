@@ -8,3 +8,5 @@ README.md
 ARCHITECTURE.md
 DEPLOYMENT.md
 .env
+actions-runner/
+_work/
